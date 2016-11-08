@@ -10,8 +10,8 @@ import akka.util.Timeout
 import com.codahale.metrics.MetricRegistry
 import com.google.common.util.concurrent.AbstractExecutionThreadService
 import mesosphere.marathon.MarathonSchedulerActor._
+import mesosphere.marathon.core.base.toRichRuntime
 import mesosphere.marathon.core.election.{ ElectionCandidate, ElectionService }
-import mesosphere.marathon.core.heartbeat._
 import mesosphere.marathon.core.leadership.LeadershipCoordinator
 import mesosphere.marathon.core.task.Task
 import mesosphere.marathon.core.health.HealthCheckManager
@@ -268,20 +268,11 @@ class MarathonSchedulerService @Inject() (
 
     leadershipCoordinator.stop()
 
-    val oldTimer = timer
-    timer = newTimer()
-    oldTimer.cancel()
+    timer.cancel()
+    timer.purge()
 
-    driver.foreach { driverInstance =>
-      mesosHeartbeatActor ! Heartbeat.MessageDeactivate(MesosHeartbeatMonitor.sessionOf(driverInstance))
-      // Our leadership has been defeated. Thus, stop the driver.
-      stopDriver()
-    }
-    // Abdication will have already happened if the driver terminated abnormally.
-    // Otherwise we've either been terminated or have lost leadership for some other reason (network part?)
-    if (isRunningLatch.getCount > 0) {
-      electionService.offerLeadership(this)
-    }
+    log.warn("Terminating after loss of leadership")
+    Runtime.getRuntime.asyncExit()
   }
 
   //End ElectionDelegate interface
