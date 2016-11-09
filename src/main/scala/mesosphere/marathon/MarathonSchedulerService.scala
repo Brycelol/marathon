@@ -262,7 +262,7 @@ class MarathonSchedulerService @Inject() (
     }
   }
 
-  override def stopLeadership(): Unit = synchronized {
+  override def stopLeadership(): Unit = {
     // invoked by election service upon loss of leadership (state transitioned to Idle)
     log.info("Lost leadership")
 
@@ -270,7 +270,7 @@ class MarathonSchedulerService @Inject() (
 
     timer.cancel()
     timer.purge()
-    
+
     // stop offering leadership.
     isRunningLatch.countDown()
 
