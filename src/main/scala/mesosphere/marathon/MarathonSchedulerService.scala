@@ -270,6 +270,9 @@ class MarathonSchedulerService @Inject() (
 
     timer.cancel()
     timer.purge()
+    
+    // stop offering leadership.
+    isRunningLatch.countDown()
 
     log.warn("Terminating after loss of leadership")
     Runtime.getRuntime.asyncExit()
